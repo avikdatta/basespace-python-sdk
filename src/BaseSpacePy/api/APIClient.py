@@ -105,10 +105,10 @@ class APIClient:
         if self.userAgent:
             headers['User-Agent'] = self.userAgent
         if headerParams:
-            for param, value in headerParams.iteritems():
+            for param, value in headerParams.items():
                 headers[param] = value
         # specify the content type
-        if not headers.has_key('Content-Type') and not method=='PUT' and not forcePost: 
+        if 'Content-Type' not in headers and not method=='PUT' and not forcePost: 
             headers['Content-Type'] = 'application/json'
         # include access token in header 
         headers['Authorization'] = 'Bearer ' + self.apiKey
@@ -118,7 +118,7 @@ class APIClient:
             if queryParams:
                 # Need to remove None values, these should not be sent
                 sentQueryParams = {}
-                for param, value in queryParams.iteritems():
+                for param, value in queryParams.items():
                     if value != None:
                         sentQueryParams[param] = value
                 if sys.version_info[0] < 3:
@@ -130,7 +130,7 @@ class APIClient:
             if queryParams:
                 # Need to remove None values, these should not be sent
                 sentQueryParams = {}
-                for param, value in queryParams.iteritems():
+                for param, value in queryParams.items():
                     if value != None:
                         sentQueryParams[param] = value
                 forcePostUrl = url
@@ -176,7 +176,7 @@ class APIClient:
               except urllib.error.URLError as e:
                 raise ServerResponseException('URLError: ' + str(e))               
         try:
-            data = json.loads(response)
+            data = json.loads(response.decode('utf-8'))
         except ValueError as e:
             raise ServerResponseException('Error decoding json in server response')
         return data            
@@ -212,7 +212,7 @@ class APIClient:
         # For dynamic types, substitute real class after looking up 'Type' value.
         # For lists, deserialize all members of a list, including lists of lists (though not list of list of list...).
         # For datetimes, convert to a readable output string 
-        for attr, attrType in instance.swaggerTypes.iteritems():
+        for attr, attrType in instance.swaggerTypes.items():
             if attr in obj:
                 value = obj[attr]
                 if attrType in ['str', 'int', 'float', 'bool']:
