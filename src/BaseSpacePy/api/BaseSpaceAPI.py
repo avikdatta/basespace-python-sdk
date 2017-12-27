@@ -1,15 +1,17 @@
 
 from pprint import pprint
 if sys.version_info[0] < 3:
-  import urllib2
-  import urllib
-  import urlparse
   import httplib
+  from urlparse import urljoin
+  from urllib2 import urlopen
+  from urllib2 import Request
   from cStringIO import StringIO
   from ConfigParser import SafeConfigParser,NoOptionError
 else:
-  import urllib.request, urllib.parse, urllib.error
   from io import StringIO
+  from urllib.parse import urljoin
+  from urllib.request import urlopen
+  from urllib.request import Request
   from configParser import SafeConfigParser,NoOptionError
   
 import shutil
@@ -68,11 +70,7 @@ class BaseSpaceAPI(BaseAPI):
             self.profile    = cred['profile']
         # TODO this replacement won't work for all environments
         self.weburl         = cred['apiServer'].replace('api.','')
-        
-        if sys.version_info[0] < 3:
-          apiServerAndVersion = urlparse.urljoin(cred['apiServer'], cred['apiVersion'])
-        else:
-          apiServerAndVersion = urllib.parse.urljoin(cred['apiServer'], cred['apiVersion'])
+        apiServerAndVersion = urljoin(cred['apiServer'], cred['apiVersion'])
           
         super(BaseSpaceAPI, self).__init__(cred['accessToken'], apiServerAndVersion, userAgent, timeout, verbose)
 
@@ -1304,10 +1302,7 @@ class BaseSpaceAPI(BaseAPI):
         # size to ensure reading until end of data stream. Create local file if
         # it doesn't exist (don't truncate in case other processes from 
         # multipart download also do this)
-        if sys.version_info[0] < 3:
-          req = urllib2.Request(response['Response']['HrefContent'])
-        else:
-          req = urllib.request.Request(response['Response']['HrefContent'])
+        req = Request(response['Response']['HrefContent'])
           
         filename = os.path.join(localDir, name)
         if not os.path.exists(filename):
@@ -1315,10 +1310,7 @@ class BaseSpaceAPI(BaseAPI):
         iter_size = 16*1024 # python default
         if len(byteRange):
             req.add_header('Range', 'bytes=%s-%s' % (byteRange[0], byteRange[1]))
-        if sys.version_info[0] < 3:
-          flo = urllib2.urlopen(req, timeout=self.getTimeout()) # timeout prevents blocking
-        else:
-          flo = urllib.parse.urlopen(req, timeout=self.getTimeout())
+        flo = urlopen(req, timeout=self.getTimeout()) # timeout prevents blocking
           
         totRead = 0
         with open(filename, 'r+b', 0) as fp:
@@ -1407,17 +1399,9 @@ class BaseSpaceAPI(BaseAPI):
         
         # TODO should use HEAD call here, instead do small GET range request
         # GET S3 url and record etag
-        if sys.version_info[0] < 3:  
-          req = urllib2.Request(response['Response']['HrefContent'])
-        else:
-          req = urllib.request.Request(response['Response']['HrefContent'])
-          
+        req = Request(response['Response']['HrefContent'])
         req.add_header('Range', 'bytes=%s-%s' % (0, 1))
-        
-        if sys.version_info[0] < 3:
-          flo = urllib2.urlopen(req, timeout=self.getTimeout()) # timeout prevents blocking
-        else:
-          flo = urllib.parse.urlopen(req, timeout=self.getTimeout())
+        flo = urlopen(req, timeout=self.getTimeout()) # timeout prevents blocking
           
         try:
             etag = flo.headers['etag']
