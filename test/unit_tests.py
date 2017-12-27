@@ -3,7 +3,11 @@ import os
 import sys
 from tempfile import mkdtemp
 import shutil
-from urlparse import urlparse, urljoin
+if sys.version_info[0] < 3:
+  from urlparse import urlparse, urljoin
+else:
+  from urllib.parse import urlparse, urljoin
+  
 import multiprocessing
 import hashlib
 import webbrowser
