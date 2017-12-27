@@ -1,13 +1,12 @@
 
 from pprint import pprint
 if sys.version_info[0] < 3:
-  import urllib2
-  import urllib
   from cStringIO import StringIO
   import httplib
+  from urllib import urlencode
 else:
   from io import StringIO
-  import urllib.request, urllib.parse, urllib.error
+  from urllib.parse import urlencode
 
 import shutil
 import json
@@ -133,10 +132,8 @@ class BaseAPI(object):
         '''
         # pycurl is hard to get working, so best to cauterise it into only the functions where it is needed
         import pycurl
-        if sys.version_info[0] < 3:
-          post = urllib.urlencode(data)
-        else:
-          post = urllib.parse.urlencode(data)
+        post = urlencode(data)
+        
           
         response = StringIO()
         c = pycurl.Curl()
