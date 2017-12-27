@@ -974,7 +974,7 @@ class BaseSpaceAPI(BaseAPI):
                 ref.append(d)
             postData['References']  = ref
         # case, an appSession is provided, we need to check if the app is running
-        if queryParams.has_key('appsessionid'):
+        if 'appsessionid' in queryParams:
             session = self.getAppSession(Id=queryParams['appsessionid'])
             if not session.canWorkOn():
                 raise Exception('AppSession status must be "running," to create an AppResults. Current status is ' + session.Status)
@@ -1297,21 +1297,29 @@ class BaseSpaceAPI(BaseAPI):
         queryParams['redirect'] = 'meta' # we need to add this parameter to get the Amazon link directly 
         
         response = self.apiClient.callAPI(resourcePath, method, queryParams, None, headerParams)
-        if response['ResponseStatus'].has_key('ErrorCode'):
+        if 'ErrorCode' in response['ResponseStatus']:
             raise Exception('BaseSpace error: ' + str(response['ResponseStatus']['ErrorCode']) + ": " + response['ResponseStatus']['Message'])
         
         # get the Amazon URL, then do the download; for range requests include
         # size to ensure reading until end of data stream. Create local file if
         # it doesn't exist (don't truncate in case other processes from 
         # multipart download also do this)
-        req = urllib2.Request(response['Response']['HrefContent'])
+        if sys.version_info[0] < 3:
+          req = urllib2.Request(response['Response']['HrefContent'])
+        else:
+          req = urllib.request.Request(response['Response']['HrefContent'])
+          
         filename = os.path.join(localDir, name)
         if not os.path.exists(filename):
             open(filename, 'a').close()
         iter_size = 16*1024 # python default
         if len(byteRange):
             req.add_header('Range', 'bytes=%s-%s' % (byteRange[0], byteRange[1]))
-        flo = urllib2.urlopen(req, timeout=self.getTimeout()) # timeout prevents blocking                
+        if sys.version_info[0] < 3:
+          flo = urllib2.urlopen(req, timeout=self.getTimeout()) # timeout prevents blocking
+        else:
+          flo = urllib.parse.urlopen(req, timeout=self.getTimeout())
+          
         totRead = 0
         with open(filename, 'r+b', 0) as fp:
             if len(byteRange) and standaloneRangeFile == False:
@@ -1369,7 +1377,7 @@ class BaseSpaceAPI(BaseAPI):
         queryParams['redirect'] = 'meta' # we need to add this parameter to get the Amazon link directly 
         
         response = self.apiClient.callAPI(resourcePath, method, queryParams, None, headerParams)
-        if response['ResponseStatus'].has_key('ErrorCode'):
+        if 'ErrorCode' in response['ResponseStatus']:
             raise Exception('BaseSpace error: ' + str(response['ResponseStatus']['ErrorCode']) + ": " + response['ResponseStatus']['Message'])                
         return response['Response']['HrefContent']
 
@@ -1391,17 +1399,26 @@ class BaseSpaceAPI(BaseAPI):
         queryParams['redirect'] = 'meta' # we need to add this parameter to get the Amazon link directly 
         
         response = self.apiClient.callAPI(resourcePath, method, queryParams,None, headerParams)
-        if response['ResponseStatus'].has_key('ErrorCode'):
+        if 'ErrorCode' in response['ResponseStatus']:
             raise Exception('BaseSpace error: ' + str(response['ResponseStatus']['ErrorCode']) + ": " + response['ResponseStatus']['Message'])
         
         # record S3 URL
         ret['url'] = response['Response']['HrefContent']
         
         # TODO should use HEAD call here, instead do small GET range request
-        # GET S3 url and record etag         
-        req = urllib2.Request(response['Response']['HrefContent'])
+        # GET S3 url and record etag
+        if sys.version_info[0] < 3:  
+          req = urllib2.Request(response['Response']['HrefContent'])
+        else:
+          req = urllib.request.Request(response['Response']['HrefContent'])
+          
         req.add_header('Range', 'bytes=%s-%s' % (0, 1))
-        flo = urllib2.urlopen(req, timeout=self.getTimeout()) # timeout prevents blocking  
+        
+        if sys.version_info[0] < 3:
+          flo = urllib2.urlopen(req, timeout=self.getTimeout()) # timeout prevents blocking
+        else:
+          flo = urllib.parse.urlopen(req, timeout=self.getTimeout())
+          
         try:
             etag = flo.headers['etag']
         except KeyError:
