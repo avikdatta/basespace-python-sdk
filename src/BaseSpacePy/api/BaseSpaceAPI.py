@@ -1,17 +1,23 @@
 
 from pprint import pprint
-import urllib2
+if sys.version_info[0] < 3:
+  import urllib2
+  import urllib
+  import urlparse
+  import httplib
+  from cStringIO import StringIO
+  from ConfigParser import SafeConfigParser,NoOptionError
+else:
+  import urllib.request, urllib.parse, urllib.error
+  from io import StringIO
+  from configParser import SafeConfigParser,NoOptionError
+  
 import shutil
-import urllib
-import httplib
-import cStringIO
 import json
 import os
 import re
 from tempfile import mkdtemp
 import socket
-import ConfigParser
-import urlparse
 import logging
 
 from BaseSpacePy.api.APIClient import APIClient
@@ -63,7 +69,11 @@ class BaseSpaceAPI(BaseAPI):
         # TODO this replacement won't work for all environments
         self.weburl         = cred['apiServer'].replace('api.','')
         
-        apiServerAndVersion = urlparse.urljoin(cred['apiServer'], cred['apiVersion'])
+        if sys.version_info[0] < 3:
+          apiServerAndVersion = urlparse.urljoin(cred['apiServer'], cred['apiVersion'])
+        else:
+          apiServerAndVersion = urllib.parse.urljoin(cred['apiServer'], cred['apiVersion'])
+          
         super(BaseSpaceAPI, self).__init__(cred['accessToken'], apiServerAndVersion, userAgent, timeout, verbose)
 
     def _setCredentials(self, clientKey, clientSecret, apiServer, apiVersion, appSessionId, accessToken, profile):
@@ -152,37 +162,37 @@ class BaseSpaceAPI(BaseAPI):
         '''
         config_file = os.path.expanduser('~/.basespacepy.cfg')
         cred = {}        
-        config = ConfigParser.SafeConfigParser()
+        config = SafeConfigParser()
         if config.read(config_file):
             if not config.has_section(profile) and profile.lower() != 'default':                
                 raise CredentialsException("Profile name '%s' not present in config file %s" % (profile, config_file))
             try:
                 cred['name'] = config.get(profile, "name")
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 pass
             try:
                 cred['clientKey'] = config.get(profile, "clientKey")
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 pass
             try:
                 cred['clientSecret'] = config.get(profile, "clientSecret")
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 pass
             try:
                 cred['apiServer'] = config.get(profile, "apiServer")
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 pass
             try:
                 cred['apiVersion'] = config.get(profile, "apiVersion")
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 pass
             try: 
                 cred['appSessionId'] = config.get(profile, "appSessionId")
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 pass
             try:
                 cred['accessToken'] = config.get(profile, "accessToken")
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 pass            
         return cred
 
@@ -211,7 +221,7 @@ class BaseSpaceAPI(BaseAPI):
             raise AppSessionException("An AppSession Id is required")
         resourcePath = self.apiClient.apiServerAndVersion + '/appsessions/{AppSessionId}'        
         resourcePath = resourcePath.replace('{AppSessionId}', Id)        
-        response = cStringIO.StringIO()
+        response = StringIO()
         # import pycurl
         # c = pycurl.Curl()
         # c.setopt(pycurl.URL, resourcePath)
