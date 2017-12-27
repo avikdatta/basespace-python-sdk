@@ -1,5 +1,9 @@
-
-import urlparse
+import sys
+if sys.version_info[0] < 3:
+  from urlparse import urljoin
+else:
+  from urllib.parse import urljoin
+  
 from BaseSpacePy.api.BaseAPI import BaseAPI
 from BaseSpacePy.api.BaseSpaceException import * #@UnusedWildImport
 from BaseSpacePy.model import * #@UnusedWildImport
@@ -17,8 +21,8 @@ class BillingAPI(BaseAPI):
         :param AccessToken: optional, though will be needed for most methods (except to obtain a new access token)
         '''        
         self.appSessionId   = appSessionId        
-        self.version        = version        
-        apiServerAndVersion = urlparse.urljoin(apiServer, version)        
+        self.version        = version
+        apiServerAndVersion = urljoin(apiServer, version)        
         super(BillingAPI, self).__init__(AccessToken, apiServerAndVersion)
 
     def createPurchase(self, products, appSessionId=''):
