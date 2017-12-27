@@ -254,7 +254,7 @@ class BaseSpaceAPI(BaseAPI):
         :param response: a dictionary (decoded from json) from getting an AppSession from the api server
         :returns: An AppSession instance                
         '''        
-        if response['ResponseStatus'].has_key('ErrorCode'):
+        if 'ErrorCode' in response['ResponseStatus']:
             raise AppSessionException('BaseSpace error: ' + str(response['ResponseStatus']['ErrorCode']) + ": " + response['ResponseStatus']['Message'])                    
         tempApi = APIClient(AccessToken='', apiServerAndVersion=self.apiClient.apiServerAndVersion, userAgent=self.apiClient.userAgent)
         res = tempApi.deserialize(response, AppSessionResponse.AppSessionResponse)            
@@ -395,7 +395,10 @@ class BaseSpaceAPI(BaseAPI):
         :returns: a url 
         '''        
         data = {'client_id': self.key, 'redirect_uri': redirectURL, 'scope': scope, 'response_type': 'code', "state": state}
-        return self.weburl + webAuthorize + '?' + urllib.urlencode(data)
+        if sys.version_info[0] < 3:
+          return self.weburl + webAuthorize + '?' + urllib.urlencode(data)
+        else:
+          return self.weburl + webAuthorize + '?' + urllib.parse.urlencode(data)
 
     def obtainAccessToken(self, code, grantType='device', redirect_uri=None):
         '''
