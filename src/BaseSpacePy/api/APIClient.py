@@ -3,14 +3,21 @@ import sys
 import os
 import re
 if sys.version_info[0] < 3:
-  import urllib
-  import urllib2
-  import requests
+  from urllib import urlencode
+  from urllib2 import Request
+  from urllib2 import urlopen
+  from urllib2 import HTTPError
+  from urllib2 import URLError
   from cStringIO import StringIO
 else:
-  import urllib.request, urllib.parse, urllib.error
+  from urllib.parse import urlencode
+  from urllib.request import Request
+  from urllib.request import urlopen
+  from urllib.error import HTTPError
+  from urllib.error import URLError
   from io import StringIO
 
+  import requests
 import json
 from subprocess import *
 import subprocess
@@ -57,10 +64,7 @@ class APIClient:
         # c.perform()
         # c.close()
         # return response.getvalue()
-        if sys.version_info[0] < 3:
-          encodedPost =  urllib.urlencode(postData)
-        else:
-          encodedPost =  urllib.parse.urlencode(postData)
+        encodedPost =  urlencode(postData)
           
         resourcePath = "%s?%s" % (resourcePath, encodedPost)
         response = requests.post(resourcePath, data=json.dumps(postData), headers=headers)
@@ -121,11 +125,8 @@ class APIClient:
                 for param, value in queryParams.items():
                     if value != None:
                         sentQueryParams[param] = value
-                if sys.version_info[0] < 3:
-                  url = url + '?' + urllib.urlencode(sentQueryParams)
-                else:
-                  url = url + '?' + urllib.parse.urlencode(sentQueryParams)
-            request = urllib2.Request(url=url, headers=headers)
+                url = url + '?' + urlencode(sentQueryParams)
+            request = Request(url=url, headers=headers)
         elif method in ['POST', 'PUT', 'DELETE']:
             if queryParams:
                 # Need to remove None values, these should not be sent
@@ -134,10 +135,7 @@ class APIClient:
                     if value != None:
                         sentQueryParams[param] = value
                 forcePostUrl = url
-                if sys.version_info[0] < 3:
-                  url = url + '?' + urllib.urlencode(sentQueryParams)
-                else:
-                  url = url + '?' + urllib.parse.urlencode(sentQueryParams)
+                url = url + '?' + urlencode(sentQueryParams)
             data = postData
             if data:
                 if type(postData) not in [str, int, float, bool]:
@@ -145,10 +143,7 @@ class APIClient:
             if not forcePost:
                 if data and not len(data): 
                     data='\n' # temp fix, in case is no data in the file, to prevent post request from failing
-                if sys.version_info[0] < 3:
-                  request = urllib2.Request(url=url, headers=headers, data=data)#,timeout=self.timeout)
-                else:
-                  request =  urllib.request.Request(url=url, headers=headers, data=data)
+                request = Request(url=url, headers=headers, data=data)#,timeout=self.timeout)
             else:                                    # use pycurl to force a post call, even w/o data
                 response = self.__forcePostCall__(forcePostUrl, sentQueryParams, headers)
             if method in ['PUT', 'DELETE']: #urllib doesnt do put and delete, default to pycurl here
@@ -161,20 +156,13 @@ class APIClient:
 
         # Make the request
         if not forcePost and not method in ['PUT', 'DELETE']: # the normal case
-            if sys.version_info[0] < 3:
-              try:
-                response = urllib2.urlopen(request, timeout=self.timeout).read()
-              except urllib2.HTTPError as e:                
-                response = e.read() # treat http error as a response (handle in caller)                
-              except urllib2.URLError as e:
-                raise ServerResponseException('URLError: ' + str(e))
-            else:
-              try:
-                response = urllib.request.urlopen(request, timeout=self.timeout).read()
-              except urllib.error.HTTPError as e:
-                response = e.read()
-              except urllib.error.URLError as e:
-                raise ServerResponseException('URLError: ' + str(e))               
+            try:
+              response = urlopen(request, timeout=self.timeout).read()
+            except HTTPError as e:                
+              response = e.read() # treat http error as a response (handle in caller)                
+            except URLError as e:
+              raise ServerResponseException('URLError: ' + str(e))
+            
         try:
             data = json.loads(response.decode('utf-8'))
         except ValueError as e:
