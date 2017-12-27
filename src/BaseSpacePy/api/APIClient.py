@@ -6,11 +6,11 @@ if sys.version_info[0] < 3:
   import urllib
   import urllib2
   import requests
+  from cStringIO import StringIO
 else:
   import urllib.request, urllib.parse, urllib.error
-  
-import io
-import cStringIO
+  from io import StringIO
+
 import json
 from subprocess import *
 import subprocess
@@ -47,7 +47,7 @@ class APIClient:
         # import pycurl
         # postData = [(p,postData[p]) for p in postData]
         # headerPrep  = [k + ':' + headers[k] for k in headers.keys()]
-        # response = cStringIO.StringIO()
+        # response = StringIO()
         # c = pycurl.Curl()
         # c.setopt(pycurl.URL,resourcePath + '?' + post)
         # c.setopt(pycurl.HTTPHEADER, headerPrep)
