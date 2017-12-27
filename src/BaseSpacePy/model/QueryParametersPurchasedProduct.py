@@ -26,5 +26,5 @@ class QueryParametersPurchasedProduct(object):
     
     def validate(self):
         for p in self.passed.keys():
-            if not legal.has_key(p): 
+            if p not in legal: 
                 raise UnknownParameterException(p)
