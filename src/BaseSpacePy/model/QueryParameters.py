@@ -60,10 +60,10 @@ class QueryParameters(object):
         :returns: None
         '''
         for p in self.required:
-            if not self.passed.has_key(p): 
+            if p not in self.passed: 
                 raise UndefinedParameterException(p)
         for p in self.passed.keys():
-            if not legal.has_key(p): 
+            if p not in legal: 
                 raise UnknownParameterException(p)
             if len(legal[p])>0 and (not self.passed[p] in legal[p]): 
                 raise IllegalParameterException(p,legal[p])

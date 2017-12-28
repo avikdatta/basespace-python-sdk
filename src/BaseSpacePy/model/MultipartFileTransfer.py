@@ -60,7 +60,7 @@ class UploadTask(object):
                 self.err_msg = str(e)                
             else:
                 # ETag contains hex encoded MD5 of part data on success
-                if res and res['Response'].has_key('ETag'):                
+                if res and 'ETag' in res['Response']:                
                     self.success = True
                 else:
                     self.success = False
