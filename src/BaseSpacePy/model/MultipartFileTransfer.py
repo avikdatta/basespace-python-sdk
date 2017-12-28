@@ -3,7 +3,10 @@ import time
 import os
 import math
 import multiprocessing
-import Queue
+if sys.version_info[0] < 3:
+  from Queue import Empty
+else:
+  from queue import Empty
 import shutil
 import signal
 import hashlib
@@ -170,7 +173,7 @@ class Consumer(multiprocessing.Process):
         while True:                                
             try:
                 next_task = self.task_queue.get(True, self.get_task_timeout) # block until timeout
-            except Queue.Empty:
+            except Empty:
                 LOGGER.debug('Worker %s exiting, getting task from task queue timed out and/or is empty' % self.name)
                 break                    
             if next_task is None:            
@@ -180,7 +183,12 @@ class Consumer(multiprocessing.Process):
             else:                                                       
                 # attempt to run tasks, with retry
                 LOGGER.debug('Worker %s processing task: %s' % (self.name, str(next_task)))
-                for i in xrange(1, self.retries + 1):                        
+                if sys.version_info[0] < 3:
+                  x_range=xrange(1, self.retries + 1)
+                else:
+                  x_range=range(1, self.retries + 1)
+                  
+                for i in x_range:                        
                     if self.halt.is_set():
                         LOGGER.debug('Worker %s exiting, found halt signal' % self.name)
                         self.task_queue.task_done()
@@ -214,7 +222,7 @@ class Consumer(multiprocessing.Process):
         while 1:
             try:
                 self.task_queue.get(False)                
-            except Queue.Empty:            
+            except Empty:            
                 break
             else:
                 self.task_queue.task_done()
@@ -244,7 +252,11 @@ class Executor(object):
         '''
         Added workers to internal list of workers, adding a poison pill for each to the task queue
         '''
-        self.consumers = [ Consumer(self.tasks, self.result_queue, self.halt_event, self.lock) for i in xrange(num_workers) ]
+        if sys.version_info[0] < 3:
+          x_range=xrange(num_workers)
+        else:
+          x_range=range(num_workers)
+        self.consumers = [ Consumer(self.tasks, self.result_queue, self.halt_event, self.lock) for i in x_range ]
         for c in self.consumers:
             self.tasks.put(None)
 
@@ -269,7 +281,7 @@ class Executor(object):
         while 1:
             try:
                 success = self.result_queue.get(False) # non-blocking                    
-            except Queue.Empty:                    
+            except Empty:                    
                 break
             else:                    
                 if success == False:                        
