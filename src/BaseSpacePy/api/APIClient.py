@@ -17,7 +17,7 @@ else:
   from urllib.error import URLError
   from io import StringIO
 
-  import requests
+import requests
 import json
 from subprocess import *
 import subprocess
